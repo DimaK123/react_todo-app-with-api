@@ -49,7 +49,6 @@ export const ErrorMessage: React.FC<Props> = ({
         onClick={handleCloseNotification}
       />
       {errorMessage}
-      {/* Unable to update a todo */}
     </div>
   );
 };

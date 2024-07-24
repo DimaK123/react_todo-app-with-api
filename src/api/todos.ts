@@ -1,5 +1,4 @@
 import { Todo } from '../types/Todo';
-import { TodoData } from '../types/TodoData';
 import { client } from '../utils/fetchClient';
 
 export const USER_ID = 9925;
@@ -20,7 +19,7 @@ export const deleteTodo = (id: number) => {
   return client.delete(`/todos/${id}`);
 };
 
-export const patchTodo = (id: number, data: TodoData) => {
+export const patchTodo = (id: number, data: Partial<Todo>) => {
   return client.patch(`/todos/${id}`, data);
 };
 

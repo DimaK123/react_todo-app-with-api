@@ -1,30 +1,22 @@
 import cn from 'classnames';
 import { Todo } from '../types/Todo';
 import { useEffect, useRef, useState } from 'react';
+import { ToggleStatus } from '../types/ToggleStatus';
 
 type Props = {
   todo: Todo;
-  changeAll: boolean;
+  deleteAll: boolean;
+  changeAll: ToggleStatus | null;
   deleteTodo: (id: number) => Promise<void>;
-  handleChangeCompletedStatus: (
-    id: number,
-    completed: boolean,
-  ) => Promise<void>;
-  handleChangeTitle: (id: number, title: string) => Promise<void>;
-  // changeStatus: (
-  //   id: number,
-  //   completed: boolean | null,
-  //   title?: string | null,
-  // ) => Promise<void>;
+  changeTodo: (id: number, data: boolean | string) => Promise<void>;
 };
 
 export const TodoItem: React.FC<Props> = ({
   todo,
   changeAll,
+  deleteAll,
   deleteTodo,
-  handleChangeCompletedStatus,
-  handleChangeTitle,
-  // changeStatus,
+  changeTodo,
 }) => {
   const { id, title, completed } = todo;
 
@@ -51,43 +43,15 @@ export const TodoItem: React.FC<Props> = ({
     }
   };
 
-  const handleCancelEditing = () => {
-    setIsEditing(false);
-    setInputValue('');
-  };
-
-  // const handleCompletedStatus = async () => {
-  //   setIsLoading(true);
-
-  //   try {
-  //     await changeStatus(id, completed);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleCompletedStatus = async () => {
     setIsLoading(true);
 
     try {
-      await handleChangeCompletedStatus(id, completed);
+      await changeTodo(id, !completed);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // const handleChangeTitle = async () => {
-  //   if (inputValue !== title) {
-  //     try {
-  //       setIsLoading(true);
-  //       await changeStatus(id, null, inputValue);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   }
-
-  //   handleCancelEditing();
-  // };
 
   const handleTitleChange = async () => {
     if (!inputValue) {
@@ -99,13 +63,13 @@ export const TodoItem: React.FC<Props> = ({
     if (inputValue !== title) {
       setIsLoading(true);
       try {
-        await handleChangeTitle(id, inputValue.trim());
+        await changeTodo(id, inputValue);
       } finally {
         setIsLoading(false);
       }
     }
 
-    handleCancelEditing();
+    setIsEditing(false);
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +82,7 @@ export const TodoItem: React.FC<Props> = ({
     const { key } = event;
 
     if (key === 'Escape') {
-      handleCancelEditing();
+      setIsEditing(false);
     }
   };
 
@@ -176,92 +140,20 @@ export const TodoItem: React.FC<Props> = ({
           </>
         )}
 
-        {/* overlay will cover the todo while it is being deleted or updated */}
         <div
           data-cy="TodoLoader"
           className={cn('modal', 'overlay', {
-            'is-active': isLoading || (changeAll && completed),
+            'is-active':
+              isLoading ||
+              (deleteAll && completed) ||
+              (changeAll === ToggleStatus.completed && completed) ||
+              (changeAll === ToggleStatus.active && !completed),
           })}
         >
           <div className="modal-background has-background-white-ter" />
           <div className="loader" />
         </div>
       </div>
-      {
-        // #region Todos in different states
-      }
-      {/* This todo is an active todo
-      <div data-cy="Todo" className="todo">
-        <label className="todo__status-label">
-          <input
-            data-cy="TodoStatus"
-            type="checkbox"
-            className="todo__status"
-          />
-        </label>
-
-        <span data-cy="TodoTitle" className="todo__title">
-          Not Completed Todo
-        </span>
-        <button type="button" className="todo__remove" data-cy="TodoDelete">
-          ×
-        </button>
-
-        <div data-cy="TodoLoader" className="modal overlay">
-          <div className="modal-background has-background-white-ter" />
-          <div className="loader" />
-        </div>
-      </div> */}
-
-      {/* This todo is being edited
-      <div data-cy="Todo" className="todo">
-        <label className="todo__status-label">
-          <input
-            data-cy="TodoStatus"
-            type="checkbox"
-            className="todo__status"
-          />
-        </label>
-        This form is shown instead of the title and remove button
-        <form>
-          <input
-            data-cy="TodoTitleField"
-            type="text"
-            className="todo__title-field"
-            placeholder="Empty todo will be deleted"
-            value="Todo is being edited now"
-          />
-        </form>
-        <div data-cy="TodoLoader" className="modal overlay">
-          <div className="modal-background has-background-white-ter" />
-          <div className="loader" />
-        </div>
-      </div> */}
-
-      {/* This todo is in loadind state
-      <div data-cy="Todo" className="todo">
-        <label className="todo__status-label">
-          <input
-            data-cy="TodoStatus"
-            type="checkbox"
-            className="todo__status"
-          />
-        </label>
-        <span data-cy="TodoTitle" className="todo__title">
-          Todo is being saved now
-        </span>
-        <button type="button" className="todo__remove" data-cy="TodoDelete">
-          ×
-        </button>
-        'is-active' class puts this modal on top of the todo
-        <div data-cy="TodoLoader" className="modal overlay is-active">
-          <div className="modal-background has-background-white-ter" />
-          <div className="loader" />
-        </div>
-      </div> */}
-      {
-        // #endregion
-      }
     </>
   );
 };

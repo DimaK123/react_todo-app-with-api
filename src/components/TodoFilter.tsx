@@ -13,18 +13,20 @@ export const TodoFilter: React.FC<Props> = ({
   const handleFilter = (event: React.MouseEvent<HTMLAnchorElement>) => {
     const text = event.currentTarget.textContent;
 
-    switch (text) {
-      case Filter.Active:
-        setFilterStatus(Filter.Active);
-        break;
+    setFilterStatus(text as Filter);
 
-      case Filter.Completed:
-        setFilterStatus(Filter.Completed);
-        break;
+    // switch (text) {
+    //   case Filter.Active:
+    //     setFilterStatus(Filter.Active);
+    //     break;
 
-      default:
-        setFilterStatus(Filter.All);
-    }
+    //   case Filter.Completed:
+    //     setFilterStatus(Filter.Completed);
+    //     break;
+
+    //   default:
+    //     setFilterStatus(Filter.All);
+    // }
   };
 
   return (

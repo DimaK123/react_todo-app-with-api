@@ -16,7 +16,7 @@ import { TodoFilter } from './components/TodoFilter';
 import { ErrorMessage } from './components/ErrorMessage';
 import { TempTodo } from './components/TempTodo';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-// import { TodoData } from './types/TodoData';
+import { ToggleStatus } from './types/ToggleStatus';
 
 export const App: React.FC = () => {
   const [todosFromServer, setTodosFromServer] = useState<TodoType[]>([]);
@@ -24,7 +24,8 @@ export const App: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [tempTodo, setTempTodo] = useState<null | string>(null);
   const [lockInput, setLockInput] = useState(false);
-  const [changeAll, setChangeAll] = useState(false);
+  const [deleteAll, setDeleteAll] = useState(false);
+  const [changeAll, setChangeAll] = useState<null | ToggleStatus>(null);
   const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
   const inputElement = useRef<HTMLInputElement>(null);
@@ -136,7 +137,7 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteAll = async () => {
-    setChangeAll(true);
+    setDeleteAll(true);
     setErrorMessage(null);
 
     let updatedTodos = [...todosFromServer];
@@ -155,181 +156,84 @@ export const App: React.FC = () => {
     );
 
     setTodosFromServer(updatedTodos);
-    setChangeAll(false);
+    setDeleteAll(false);
     inputElement.current?.focus();
   };
 
-  // const handleChangeTodoStatus = async (id: number, completed: boolean) => {
-  //   try {
-  //     await patchTodo(id, { completed: !completed });
-  //     setTodosFromServer(currentTodos =>
-  //       currentTodos.map(todo => {
-  //         if (todo.id === id) {
-  //           return {
-  //             ...todo,
-  //             completed: !completed,
-  //           };
-  //         }
-
-  //         return todo;
-  //       }),
-  //     );
-  //   } catch {
-  //     setErrorMessage('Unable to update a todo');
-  //   }
-  // };
-
-  // const handleChangeTodo = async (
-  //   id: number,
-  //   completed: boolean | null = null,
-  //   title: string | null = null,
-  // ) => {
-  //   try {
-  //     const updateData: TodoData = {};
-
-  //     if (completed !== null) {
-  //       updateData.completed = !completed;
-  //     }
-
-  //     if (title !== null) {
-  //       updateData.title = title.trim();
-  //     }
-
-  //     await patchTodo(id, updateData);
-  //     setTodosFromServer(currentTodos =>
-  //       currentTodos.map(todo => {
-  //         if (todo.id === id) {
-  //           return {
-  //             ...todo,
-  //             ...updateData,
-  //           };
-  //         }
-
-  //         return todo;
-  //       }),
-  //     );
-  //   } catch {
-  //     setErrorMessage('Unable to update a todo');
-  //   }
-  // };
-
-  const handleChangeCopletedStatus = async (id: number, completed: boolean) => {
-    try {
-      await patchTodo(id, { completed: !completed });
-      setTodosFromServer(currentTodos =>
-        currentTodos.map(todo => {
-          if (todo.id === id) {
-            return {
-              ...todo,
-              ...{ completed: !completed },
-            };
-          }
-
-          return todo;
-        }),
-      );
-    } catch {
-      setErrorMessage('Unable to update a todo');
-    }
-  };
-
-  const handleChangeTitle = async (id: number, title: string) => {
-    try {
-      await patchTodo(id, { title });
-      setTodosFromServer(currentTodos =>
-        currentTodos.map(todo => {
-          if (todo.id === id) {
-            return {
-              ...todo,
-              title,
-            };
-          }
-
-          return todo;
-        }),
-      );
-    } catch {
-      setErrorMessage('Unable to update a todo');
-    }
-  };
-
-  // const handlePatchAllTodos = async () => {
-  //   setChangeAll(true);
-  //   let updatedTodos = [...todosFromServer];
-
-  //   await Promise.allSettled(
-  //     todosFromServer.map(async ({ id }) => {
-  //       try {
-  //         const completedStatus = allCompleted ? false : true;
-
-  //         await patchTodo(id, { completed: completedStatus });
-  //         updatedTodos = updatedTodos.map(todo => {
-  //           return {
-  //             ...todo,
-  //             completed: completedStatus,
-  //           };
-  //         });
-  //       } catch {
-  //         setErrorMessage('Unable to delete a todo');
-  //       }
-  //     }),
-  //   );
-
-  //   setTodosFromServer(updatedTodos);
-  //   setChangeAll(false);
-  // };
-
-  const handlePatchAllTodos = async () => {
-    setChangeAll(true);
+  const handleToggleAll = async () => {
     let updatedTodos = [...todosFromServer];
 
-    const completedStatus = allCompleted ? true : false;
+    await Promise.allSettled(
+      todosFromServer.map(async ({ id, completed }) => {
+        try {
+          if (allCompleted) {
+            setChangeAll(ToggleStatus.completed);
+            await patchTodo(id, { completed: false });
+          }
 
-    // console.log(completedStatus);
+          if (!completed) {
+            setChangeAll(ToggleStatus.active);
+            await patchTodo(id, { completed: true });
+          }
 
-    if (completedStatus) {
-      await Promise.allSettled(
-        todosFromServer.map(async ({ id }) => {
-          try {
-            await patchTodo(id, { completed: !completedStatus });
-            updatedTodos = updatedTodos.map(todo => {
+          updatedTodos = updatedTodos.map(todo => {
+            if (allCompleted) {
               return {
                 ...todo,
-                completed: !completedStatus,
+                completed: false,
               };
-            });
-          } catch {
-            setErrorMessage('Unable to delete a todo');
-          }
-        }),
-      );
-    }
-
-    if (!completedStatus) {
-      await Promise.allSettled(
-        todosFromServer.map(async ({ id, completed }) => {
-          if (!completed) {
-            try {
-              await patchTodo(id, { completed: !completedStatus });
-              updatedTodos = updatedTodos.map(todo => {
-                return {
-                  ...todo,
-                  completed: !completedStatus,
-                };
-              });
-            } catch {
-              setErrorMessage('Unable to delete a todo');
             }
-          }
-        }),
-      );
-    }
 
-    // console.log(updatedTodos);
+            if (!allCompleted && !completed) {
+              return {
+                ...todo,
+                completed: true,
+              };
+            }
 
+            return todo;
+          });
+        } catch {
+          setErrorMessage('Unable to delete a todo');
+        }
+      }),
+    );
     setTodosFromServer(updatedTodos);
-    setChangeAll(false);
+    setChangeAll(null);
   };
+
+  const handleChangeTodo = useCallback(
+    async (id: number, data: boolean | string) => {
+      try {
+        const updateData: Partial<TodoType> = {};
+
+        if (typeof data === 'boolean') {
+          updateData.completed = data;
+        }
+
+        if (typeof data === 'string') {
+          updateData.title = data.trim();
+        }
+
+        await patchTodo(id, updateData);
+        setTodosFromServer(currentTodos =>
+          currentTodos.map(todo => {
+            if (todo.id === id) {
+              return {
+                ...todo,
+                ...updateData,
+              };
+            }
+
+            return todo;
+          }),
+        );
+      } catch {
+        setErrorMessage('Unable to update a todo');
+      }
+    },
+    [],
+  );
 
   return (
     <div className="todoapp">
@@ -337,7 +241,6 @@ export const App: React.FC = () => {
 
       <div className="todoapp__content">
         <header className="todoapp__header">
-          {/* this button should have `active` class only if all todos are completed */}
           {!!todosFromServer.length && (
             <button
               type="button"
@@ -345,7 +248,7 @@ export const App: React.FC = () => {
                 active: allCompleted,
               })}
               data-cy="ToggleAllButton"
-              onClick={handlePatchAllTodos}
+              onClick={handleToggleAll}
             />
           )}
 
@@ -369,11 +272,10 @@ export const App: React.FC = () => {
               <CSSTransition key={todo.id} timeout={300} classNames="item">
                 <TodoItem
                   todo={todo}
-                  deleteTodo={handleDeleteTodo}
+                  deleteAll={deleteAll}
                   changeAll={changeAll}
-                  handleChangeCompletedStatus={handleChangeCopletedStatus}
-                  handleChangeTitle={handleChangeTitle}
-                  // changeStatus={handleChangeTodo}
+                  deleteTodo={handleDeleteTodo}
+                  changeTodo={handleChangeTodo}
                 />
               </CSSTransition>
             ))}
