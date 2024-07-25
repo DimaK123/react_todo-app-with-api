@@ -22,16 +22,15 @@ export const TodoItem: React.FC<Props> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(title);
 
   const editForm = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isEditing) {
-      setInputValue(title);
       editForm.current?.focus();
     }
-  }, [isEditing, title]);
+  }, [isEditing]);
 
   const deleteItem = async () => {
     setIsLoading(true);
@@ -60,16 +59,19 @@ export const TodoItem: React.FC<Props> = ({
       return;
     }
 
+    if (inputValue === title) {
+      setIsEditing(false);
+    }
+
     if (inputValue !== title) {
       setIsLoading(true);
       try {
         await changeTodo(id, inputValue);
+        setIsEditing(false);
       } finally {
         setIsLoading(false);
       }
     }
-
-    setIsEditing(false);
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {

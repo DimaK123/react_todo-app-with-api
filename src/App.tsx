@@ -35,6 +35,8 @@ export const App: React.FC = () => {
     [todosFromServer],
   );
 
+  const allCompleted = completedTodos.length === todosFromServer.length;
+
   const activeTodos = useMemo(
     () => todosFromServer.filter(todo => !todo.completed),
     [todosFromServer],
@@ -58,8 +60,6 @@ export const App: React.FC = () => {
       }),
     [todosFromServer, filterStatus],
   );
-
-  const allCompleted = completedTodos.length === todosFromServer.length;
 
   const loadTodos = async () => {
     try {
@@ -136,6 +136,42 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleChangeTodo = useCallback(
+    async (id: number, data: boolean | string) => {
+      try {
+        const updateData: Partial<TodoType> = {};
+
+        if (typeof data === 'boolean') {
+          updateData.completed = data;
+        }
+
+        if (typeof data === 'string') {
+          updateData.title = data.trim();
+        }
+
+        await patchTodo(id, updateData);
+        setTodosFromServer(currentTodos =>
+          currentTodos.map(todo => {
+            if (todo.id === id) {
+              return {
+                ...todo,
+                ...updateData,
+              };
+            }
+
+            return todo;
+          }),
+        );
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setErrorMessage('Unable to update a todo');
+          throw error;
+        }
+      }
+    },
+    [],
+  );
+
   const handleDeleteAll = async () => {
     setDeleteAll(true);
     setErrorMessage(null);
@@ -201,39 +237,6 @@ export const App: React.FC = () => {
     setTodosFromServer(updatedTodos);
     setChangeAll(null);
   };
-
-  const handleChangeTodo = useCallback(
-    async (id: number, data: boolean | string) => {
-      try {
-        const updateData: Partial<TodoType> = {};
-
-        if (typeof data === 'boolean') {
-          updateData.completed = data;
-        }
-
-        if (typeof data === 'string') {
-          updateData.title = data.trim();
-        }
-
-        await patchTodo(id, updateData);
-        setTodosFromServer(currentTodos =>
-          currentTodos.map(todo => {
-            if (todo.id === id) {
-              return {
-                ...todo,
-                ...updateData,
-              };
-            }
-
-            return todo;
-          }),
-        );
-      } catch {
-        setErrorMessage('Unable to update a todo');
-      }
-    },
-    [],
-  );
 
   return (
     <div className="todoapp">

@@ -14,55 +14,27 @@ export const TodoFilter: React.FC<Props> = ({
     const text = event.currentTarget.textContent;
 
     setFilterStatus(text as Filter);
-
-    // switch (text) {
-    //   case Filter.Active:
-    //     setFilterStatus(Filter.Active);
-    //     break;
-
-    //   case Filter.Completed:
-    //     setFilterStatus(Filter.Completed);
-    //     break;
-
-    //   default:
-    //     setFilterStatus(Filter.All);
-    // }
   };
+
+  const filterParams = Object.values(Filter);
 
   return (
     <nav className="filter" data-cy="Filter">
-      <a
-        href="#/"
-        className={cn('filter__link', {
-          selected: filterStatus === Filter.All,
-        })}
-        data-cy="FilterLinkAll"
-        onClick={handleFilter}
-      >
-        All
-      </a>
-
-      <a
-        href="#/active"
-        className={cn('filter__link', {
-          selected: filterStatus === Filter.Active,
-        })}
-        data-cy="FilterLinkActive"
-        onClick={handleFilter}
-      >
-        Active
-      </a>
-
-      <a
-        href="#/completed"
-        className={cn('filter__link', {
-          selected: filterStatus === Filter.Completed,
-        })}
-        data-cy="FilterLinkCompleted"
-        onClick={handleFilter}
-      >
-        Completed
-      </a>
+      {filterParams.map(param => {
+        return (
+          <a
+            key={param}
+            href={`#/${param.toLocaleLowerCase()}`}
+            className={cn('filter__link', {
+              selected: filterStatus === param,
+            })}
+            data-cy={`FilterLink${param}`}
+            onClick={handleFilter}
+          >
+            {param}
+          </a>
+        );
+      })}
     </nav>
   );
 };
